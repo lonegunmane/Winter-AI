@@ -24,33 +24,33 @@ export const WinterLogo: React.FC<WinterLogoProps> = ({
       >
         <defs>
           <linearGradient id="logo-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#0a1120" />
-            <stop offset="50%" stop-color="#0f1d36" />
-            <stop offset="100%" stop-color="#050a14" />
+            <stop offset="0%" stopColor="#0a1120" />
+            <stop offset="50%" stopColor="#0f1d36" />
+            <stop offset="100%" stopColor="#050a14" />
           </linearGradient>
 
           <linearGradient id="w-facet-1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#e0f2fe" />
-            <stop offset="60%" stop-color="#38bdf8" />
-            <stop offset="100%" stop-color="#0284c7" />
+            <stop offset="0%" stopColor="#e0f2fe" />
+            <stop offset="60%" stopColor="#38bdf8" />
+            <stop offset="100%" stopColor="#0284c7" />
           </linearGradient>
 
           <linearGradient id="w-facet-2" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#0369a1" />
-            <stop offset="50%" stop-color="#0ea5e9" />
-            <stop offset="100%" stop-color="#bae6fd" />
+            <stop offset="0%" stopColor="#0369a1" />
+            <stop offset="50%" stopColor="#0ea5e9" />
+            <stop offset="100%" stopColor="#bae6fd" />
           </linearGradient>
 
           <linearGradient id="w-facet-3" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#f0f9ff" />
-            <stop offset="50%" stop-color="#7dd3fc" />
-            <stop offset="100%" stop-color="#0284c7" />
+            <stop offset="0%" stopColor="#f0f9ff" />
+            <stop offset="50%" stopColor="#7dd3fc" />
+            <stop offset="100%" stopColor="#0284c7" />
           </linearGradient>
 
           <linearGradient id="w-facet-4" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#e0f2fe" />
-            <stop offset="60%" stop-color="#38bdf8" />
-            <stop offset="100%" stop-color="#0369a1" />
+            <stop offset="0%" stopColor="#e0f2fe" />
+            <stop offset="60%" stopColor="#38bdf8" />
+            <stop offset="100%" stopColor="#0369a1" />
           </linearGradient>
 
           {showGlow && (

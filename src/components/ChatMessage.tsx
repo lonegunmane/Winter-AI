@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Copy, Check, RotateCcw, Volume2, VolumeX, Edit2 } from 'lucide-react';
 import { ChatMessage as ChatMessageType, FontSize } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
-import { WinterLogo } from './WinterLogo';
+import { FrostySnowflakeLogo } from './FrostySnowflakeLogo';
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -23,6 +23,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const isUser = message.role === 'user';
+  const isWaitingForResponse = isStreaming && !message.content && !isUser;
 
   const handleCopy = async () => {
     try {
@@ -56,7 +57,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     window.speechSynthesis.speak(utterance);
   };
 
-  // Font size classes
   const fontClass =
     fontSize === 'compact'
       ? 'text-xs'
@@ -71,20 +71,32 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   return (
     <div
-      className={`group flex flex-col w-full px-3 sm:px-6 py-2 sm:py-3 transition-colors ${
+      className={`group flex flex-col w-full px-3 sm:px-6 py-2 transition-colors ${
         isUser ? 'items-end' : 'items-start'
       }`}
     >
-      <div className={`flex items-start gap-2.5 max-w-[94%] sm:max-w-[85%] md:max-w-[78%] ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div
+        className={`flex items-start gap-2.5 max-w-[92%] sm:max-w-[85%] md:max-w-[78%] ${
+          isUser ? 'flex-row-reverse' : 'flex-row'
+        }`}
+      >
         {/* Avatar */}
         <div
           className={`shrink-0 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl select-none text-xs font-semibold overflow-hidden ${
             isUser
-              ? 'bg-slate-700/80 text-slate-200 border border-slate-600'
-              : 'border border-sky-500/30 shadow-xs'
+              ? 'bg-slate-800 text-slate-200 border border-slate-700/80'
+              : 'border border-sky-500/20'
           }`}
         >
-          {isUser ? 'You' : <WinterLogo size={32} showGlow={false} />}
+          {isUser ? (
+            'You'
+          ) : (
+            <FrostySnowflakeLogo
+              size={30}
+              showGlow={false}
+              spinning={isStreaming}
+            />
+          )}
         </div>
 
         {/* Bubble */}
@@ -94,12 +106,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               isUser
                 ? 'bg-sky-600 text-white rounded-tr-xs'
                 : message.isError
-                ? 'bg-rose-950/60 border border-rose-800 text-rose-200 rounded-tl-xs'
-                : 'bg-slate-800/80 border border-slate-700/70 text-slate-100 rounded-tl-xs'
+                ? 'bg-rose-950/60 border border-rose-900/60 text-rose-200 rounded-tl-xs'
+                : 'bg-[#0c1424]/90 border border-slate-800/80 text-slate-100 rounded-tl-xs'
             }`}
           >
             {isUser ? (
               <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+            ) : isWaitingForResponse ? (
+              /* Elegantly spinning frosty snowflake while thinking */
+              <div className="flex items-center gap-2.5 py-1 text-slate-300">
+                <FrostySnowflakeLogo size={22} spinning={true} />
+                <span className="text-xs text-sky-300/80 font-medium animate-pulse">
+                  Winter is thinking...
+                </span>
+              </div>
             ) : (
               <>
                 <MarkdownRenderer content={message.content} />
@@ -111,60 +131,65 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           </div>
 
           {/* Action Row */}
-          <div
-            className={`flex items-center gap-1.5 px-1 text-[11px] text-slate-500 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ${
-              isUser ? 'justify-end' : 'justify-start'
-            }`}
-          >
-            <span>{timeString}</span>
+          {!isWaitingForResponse && (
+            <div
+              className={`flex items-center gap-1.5 px-1 text-[11px] text-slate-500 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ${
+                isUser ? 'justify-end' : 'justify-start'
+              }`}
+            >
+              <span>{timeString}</span>
+              {message.isOffline && (
+                <span className="text-[10px] text-amber-400 font-mono">• ❄️ Offline</span>
+              )}
 
-            {!isStreaming && (
-              <>
-                <span>•</span>
-                <button
-                  onClick={handleCopy}
-                  className="hover:text-slate-300 p-1 rounded"
-                  title="Copy message"
-                >
-                  {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                </button>
-
-                {!isUser && 'speechSynthesis' in window && (
+              {!isStreaming && (
+                <>
+                  <span>•</span>
                   <button
-                    onClick={handleSpeak}
-                    className="hover:text-slate-300 p-1 rounded"
-                    title={isSpeaking ? 'Stop speaking' : 'Read aloud'}
+                    onClick={handleCopy}
+                    className="hover:text-slate-300 p-0.5 rounded"
+                    title="Copy message"
                   >
-                    {isSpeaking ? (
-                      <VolumeX className="w-3 h-3 text-sky-400 animate-pulse" />
-                    ) : (
-                      <Volume2 className="w-3 h-3" />
-                    )}
+                    {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                   </button>
-                )}
 
-                {isUser && onEdit && (
-                  <button
-                    onClick={() => onEdit(message.content)}
-                    className="hover:text-slate-300 p-1 rounded"
-                    title="Edit prompt"
-                  >
-                    <Edit2 className="w-3 h-3" />
-                  </button>
-                )}
+                  {!isUser && 'speechSynthesis' in window && (
+                    <button
+                      onClick={handleSpeak}
+                      className="hover:text-slate-300 p-0.5 rounded"
+                      title={isSpeaking ? 'Stop speaking' : 'Read aloud'}
+                    >
+                      {isSpeaking ? (
+                        <VolumeX className="w-3 h-3 text-sky-400 animate-pulse" />
+                      ) : (
+                        <Volume2 className="w-3 h-3" />
+                      )}
+                    </button>
+                  )}
 
-                {!isUser && onRetry && (
-                  <button
-                    onClick={() => onRetry(message.id)}
-                    className="hover:text-slate-300 p-1 rounded"
-                    title="Regenerate response"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                  </button>
-                )}
-              </>
-            )}
-          </div>
+                  {isUser && onEdit && (
+                    <button
+                      onClick={() => onEdit(message.content)}
+                      className="hover:text-slate-300 p-0.5 rounded"
+                      title="Edit message"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                    </button>
+                  )}
+
+                  {!isUser && onRetry && (
+                    <button
+                      onClick={() => onRetry(message.id)}
+                      className="hover:text-slate-300 p-0.5 rounded"
+                      title="Regenerate response"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

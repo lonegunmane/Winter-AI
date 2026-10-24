@@ -7,6 +7,7 @@ export interface ChatMessage {
   timestamp: number;
   model?: string;
   isError?: boolean;
+  isOffline?: boolean;
 }
 
 export interface Conversation {
@@ -32,8 +33,10 @@ export type SidebarTab =
   | 'tools'
   | 'about';
 
-export type ThemeMode = 'dark' | 'light' | 'system';
+export type ThemeMode = 'dark';
 export type FontSize = 'compact' | 'normal' | 'relaxed';
+
+export type OfflineEngineChoice = 'smart-local' | 'webllm-smollm' | 'webllm-qwen';
 
 export interface AppSettings {
   apiKey: string;
@@ -43,7 +46,9 @@ export interface AppSettings {
   theme: ThemeMode;
   fontSize: FontSize;
   reducedMotion: boolean;
-  enableMemoryInjection: boolean; // Automatically inject user memory/notes into Winter's prompt
+  enableMemoryInjection: boolean;
+  offlineEngine: OfflineEngineChoice;
+  forceOfflineMode: boolean; // Allows testing/forcing offline engine even when online
 }
 
 export interface ServerStatus {
@@ -66,26 +71,51 @@ export interface NativeDeviceStatus {
   };
 }
 
-export const DEFAULT_SYSTEM_PROMPT = `You are Winter, a personal AI assistant.
+export const DEFAULT_SYSTEM_PROMPT = `You are Winter, an elite personal AI assistant.
 You embody the quiet, crystalline elegance and calmness of winter.
 - Tone: Calm, clear, intelligent, and subtly warm.
 - Style: Speak naturally and helpfully without fluff, hollow enthusiasm, or sycophancy.
+- Capabilities: Deeply capable across reasoning, planning, coding, writing, research, and analysis.
 - Brevity: Be concise and structured by default. When asked for deeper insight, code, analysis, or structured plans, provide thorough, rigorous, and beautifully formatted answers.
 - Formatting: Use clean markdown, bullet points, and code blocks with language identifiers where appropriate.`;
 
 export const AVAILABLE_MODELS = [
   {
-    id: 'gemini-3.8-flash',
-    name: 'Gemini 3.8 Flash',
-    description: 'Fastest, highly capable flagship flash model (Recommended)',
-    speed: 'Ultra Fast',
-    memoryUsage: 'Low',
+    id: 'gemini-2.0-flash',
+    name: 'Winter Flash (Recommended)',
+    description: 'High-speed cloud intelligence with deep reasoning and analysis',
+    speed: '< 1s latency',
+    tier: 'Cloud',
   },
   {
-    id: 'gemini-3.1-flash-lite',
-    name: 'Gemini 3.1 Flash Lite',
-    description: 'Lightest footprint, lowest latency for low-spec devices',
-    speed: 'Instantaneous',
-    memoryUsage: 'Minimal',
+    id: 'gemini-1.5-flash',
+    name: 'Winter Flash Lite',
+    description: 'Instantaneous response time, ultra-light bandwidth',
+    speed: '< 0.5s latency',
+    tier: 'Cloud',
+  },
+];
+
+export const OFFLINE_ENGINES = [
+  {
+    id: 'smart-local',
+    name: 'Winter Smart Local Brain',
+    description: 'Instant, zero-download, ultra-fast local reasoning engine (Huawei P20 & low RAM friendly)',
+    size: '0 MB (Pre-bundled)',
+    recommendedFor: 'Low-spec phones & offline reliability',
+  },
+  {
+    id: 'webllm-smollm',
+    name: 'SmolLM-135M Quantized',
+    description: 'Ultra-compact neural weights running via WebGPU/WASM in browser',
+    size: '~120 MB',
+    recommendedFor: 'Neural text generation on 6GB+ RAM devices',
+  },
+  {
+    id: 'webllm-qwen',
+    name: 'Qwen2-0.5B-Instruct Q4',
+    description: 'Strong compact language model running on-device',
+    size: '~350 MB',
+    recommendedFor: 'Laptops and modern tablets with WebGPU',
   },
 ];

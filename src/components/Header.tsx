@@ -1,51 +1,66 @@
 import React from 'react';
-import { Menu, Settings, Moon, Sun, Wifi, WifiOff } from 'lucide-react';
+import { Settings, PanelLeftOpen, MessageSquarePlus, WifiOff, CloudLightning } from 'lucide-react';
 import { AppSettings, ServerStatus } from '../types';
-import { WinterLogo } from './WinterLogo';
+import { FrostySnowflakeLogo } from './FrostySnowflakeLogo';
 import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
   settings: AppSettings;
   conversationTitle?: string;
+  isSidebarOpen: boolean;
   onToggleSidebar: () => void;
+  onNewChat: () => void;
   onOpenSettings: () => void;
-  onToggleTheme: () => void;
+  onToggleOfflineMode: () => void;
   isGenerating: boolean;
   isOnline: boolean;
+  isOfflineModeActive: boolean;
   serverStatus: ServerStatus | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  settings,
+  settings: _settings,
   conversationTitle = 'Winter',
+  isSidebarOpen,
   onToggleSidebar,
+  onNewChat,
   onOpenSettings,
-  onToggleTheme,
+  onToggleOfflineMode,
   isGenerating,
-  isOnline,
-  serverStatus,
+  isOfflineModeActive,
 }) => {
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between px-3 sm:px-5 py-2.5 bg-slate-950/85 backdrop-blur-md border-b border-slate-800/80 select-none">
-      {/* Sidebar Toggle & Branding */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Mobile Hamburger / Sidebar toggle button */}
-        <button
-          onClick={onToggleSidebar}
-          className="p-1.5 sm:p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-900 border border-slate-800 transition-colors"
-          title="Toggle navigation sidebar"
-          aria-label="Toggle sidebar"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+    <header className="sticky top-0 z-30 flex items-center justify-between px-3 sm:px-4 py-2 bg-[#030712]/80 backdrop-blur-md border-b border-sky-950/30 select-none">
+      {/* Left: Reopen Sidebar Button & Title */}
+      <div className="flex items-center gap-2">
+        {!isSidebarOpen && (
+          <button
+            onClick={onToggleSidebar}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition-colors"
+            title="Open sidebar"
+            aria-label="Open sidebar"
+          >
+            <PanelLeftOpen className="w-4 h-4 text-slate-300 hover:text-sky-300" />
+          </button>
+        )}
 
-        <div className="flex items-center gap-2.5">
+        {!isSidebarOpen && (
+          <button
+            onClick={onNewChat}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition-colors"
+            title="New chat"
+            aria-label="New chat"
+          >
+            <MessageSquarePlus className="w-4 h-4 text-slate-300 hover:text-sky-300" />
+          </button>
+        )}
+
+        <div className="flex items-center gap-2 ml-1">
           <div className="relative">
-            <WinterLogo size={32} />
-            {/* Status dot */}
+            <FrostySnowflakeLogo size={24} spinning={isGenerating} />
             <span
-              className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-950 ${
-                !isOnline
+              className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#030712] ${
+                isOfflineModeActive
                   ? 'bg-amber-400'
                   : isGenerating
                   ? 'bg-sky-400 animate-pulse'
@@ -54,57 +69,46 @@ export const Header: React.FC<HeaderProps> = ({
             />
           </div>
 
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h1 className="font-semibold text-sm sm:text-base tracking-tight text-white truncate max-w-[160px] sm:max-w-[280px]">
-                {conversationTitle}
-              </h1>
-              <span className="hidden xs:inline-block text-[10px] px-1.5 py-0.2 rounded bg-sky-950/70 border border-sky-800/60 text-sky-300 font-mono">
-                {settings.model.replace('gemini-', '')}
-              </span>
-            </div>
-            <p className="text-[10px] sm:text-xs text-slate-400 leading-none mt-0.5 flex items-center gap-1">
-              {!isOnline ? (
-                <span className="text-amber-400 flex items-center gap-1">
-                  <WifiOff className="w-2.5 h-2.5" /> Offline
-                </span>
-              ) : isGenerating ? (
-                <span className="text-sky-300">Winter is typing...</span>
-              ) : (
-                <span className="text-slate-400 flex items-center gap-1">
-                  <Wifi className="w-2.5 h-2.5 text-emerald-400" />
-                  {serverStatus?.hasServerKey || settings.apiKey ? 'Ready' : 'API Key Setup'}
-                </span>
-              )}
-            </p>
-          </div>
+          <span className="font-medium text-xs sm:text-sm text-slate-200 truncate max-w-[160px] sm:max-w-[280px]">
+            {conversationTitle}
+          </span>
         </div>
       </div>
 
-      {/* Header Actions */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        <PWAInstallButton />
-
-        {/* Theme Toggle */}
+      {/* Right: Engine Pill, Install & Settings */}
+      <div className="flex items-center gap-1.5">
+        {/* Subtle Mode Switch Pill */}
         <button
-          onClick={onToggleTheme}
-          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 border border-slate-800/80 transition-colors"
-          title={settings.theme === 'dark' ? 'Switch to Frost Light theme' : 'Switch to Winter Dark theme'}
+          onClick={onToggleOfflineMode}
+          className={`text-[10px] px-2 py-0.5 rounded-full border transition-all flex items-center gap-1 ${
+            isOfflineModeActive
+              ? 'bg-amber-950/40 border-amber-800/50 text-amber-300 hover:bg-amber-900/50'
+              : 'bg-sky-950/40 border-sky-900/50 text-sky-300 hover:bg-sky-900/50'
+          }`}
+          title={isOfflineModeActive ? 'Offline Local Brain active (tap to switch)' : 'Winter Online active (tap to test offline)'}
         >
-          {settings.theme === 'dark' ? (
-            <Sun className="w-4 h-4 text-amber-300" />
+          {isOfflineModeActive ? (
+            <>
+              <WifiOff className="w-2.5 h-2.5 text-amber-400" />
+              <span>Offline</span>
+            </>
           ) : (
-            <Moon className="w-4 h-4 text-sky-400" />
+            <>
+              <CloudLightning className="w-2.5 h-2.5 text-sky-400" />
+              <span>Online</span>
+            </>
           )}
         </button>
 
-        {/* Settings button */}
+        <PWAInstallButton />
+
         <button
           onClick={onOpenSettings}
-          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 border border-slate-800/80 transition-colors"
-          title="Open Settings"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/80 transition-colors"
+          title="Settings"
+          aria-label="Settings"
         >
-          <Settings className="w-4 h-4 text-slate-300" />
+          <Settings className="w-4 h-4 text-slate-400 hover:text-sky-300" />
         </button>
       </div>
     </header>

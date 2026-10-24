@@ -1,6 +1,6 @@
 {
   "name": "Winter - Personal AI Assistant",
-  "description": "An ultra-lightweight, high-performance personal AI assistant PWA built for speed, calmness, and low-spec hardware.",
+  "description": "A calm, intelligent personal AI assistant working seamlessly online with cloud intelligence and completely offline on low-spec hardware.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

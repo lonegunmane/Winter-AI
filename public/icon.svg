@@ -1,96 +1,74 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bg-ice" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0a1120" />
-      <stop offset="50%" stop-color="#0f1d36" />
-      <stop offset="100%" stop-color="#050a14" />
+    <linearGradient id="frosty-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#030712" />
+      <stop offset="50%" stop-color="#0b1329" />
+      <stop offset="100%" stop-color="#020617" />
     </linearGradient>
 
-    <!-- Glacial Facet Gradients for the "W" -->
-    <linearGradient id="facet-left" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#e0f2fe" />
-      <stop offset="60%" stop-color="#38bdf8" />
+    <linearGradient id="ice-crystal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="40%" stop-color="#e0f2fe" />
+      <stop offset="75%" stop-color="#7dd3fc" />
       <stop offset="100%" stop-color="#0284c7" />
     </linearGradient>
 
-    <linearGradient id="facet-center-left" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#0369a1" />
-      <stop offset="50%" stop-color="#0ea5e9" />
-      <stop offset="100%" stop-color="#bae6fd" />
-    </linearGradient>
-
-    <linearGradient id="facet-center-right" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f0f9ff" />
-      <stop offset="50%" stop-color="#7dd3fc" />
-      <stop offset="100%" stop-color="#0284c7" />
-    </linearGradient>
-
-    <linearGradient id="facet-right" x1="100%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#e0f2fe" />
-      <stop offset="60%" stop-color="#38bdf8" />
+    <radialGradient id="frost-core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="35%" stop-color="#7dd3fc" />
+      <stop offset="70%" stop-color="#0ea5e9" />
       <stop offset="100%" stop-color="#0369a1" />
-    </linearGradient>
-
-    <!-- Frost Glow Filter -->
-    <filter id="ice-glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="12" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
+    </radialGradient>
   </defs>
 
-  <!-- Background Squircle with subtle ice border -->
-  <rect width="512" height="512" rx="112" fill="url(#bg-ice)" />
-  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="#38bdf8" stroke-width="2" stroke-opacity="0.3" />
+  <rect width="512" height="512" rx="120" fill="url(#frosty-bg)" />
+  <rect width="504" height="504" x="4" y="4" rx="116" fill="none" stroke="#38bdf8" stroke-width="3" stroke-opacity="0.4" />
 
-  <!-- Subtle Glacial Hexagonal Ring behind W -->
-  <polygon points="256,76 396,156 396,356 256,436 116,356 116,156" fill="none" stroke="#38bdf8" stroke-width="2" stroke-opacity="0.2" stroke-dasharray="6 8" />
+  <circle cx="256" cy="256" r="185" fill="none" stroke="#38bdf8" stroke-width="2" stroke-opacity="0.2" stroke-dasharray="6 10" />
+  <polygon points="256,96 394,176 394,336 256,416 118,336 118,176" fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-opacity="0.3" />
 
-  <!-- Frost Shard Shadow under the W -->
-  <path d="M 124 162 L 206 376 L 256 270 L 306 376 L 388 162 L 348 162 L 286 324 L 256 242 L 226 324 L 164 162 Z" fill="#0284c7" opacity="0.3" filter="url(#ice-glow)" />
+  <g id="snowflake">
+    <!-- 6 Axes -->
+    <g transform="rotate(0 256 256)">
+      <line x1="256" y1="256" x2="256" y2="92" stroke="url(#ice-crystal)" stroke-width="11" stroke-linecap="round" />
+      <path d="M 230 148 L 256 122 L 282 148" fill="none" stroke="url(#ice-crystal)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 224 196 L 256 164 L 288 196" fill="none" stroke="url(#ice-crystal)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
+      <polygon points="256,76 264,88 256,98 248,88" fill="#ffffff" />
+    </g>
+    <g transform="rotate(60 256 256)">
+      <line x1="256" y1="256" x2="256" y2="92" stroke="url(#ice-crystal)" stroke-width="11" stroke-linecap="round" />
+      <path d="M 230 148 L 256 122 L 282 148" fill="none" stroke="url(#ice-crystal)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 224 196 L 256 164 L 288 196" fill="none" stroke="url(#ice-crystal)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
+      <polygon points="256,76 264,88 256,98 248,88" fill="#ffffff" />
+    </g>
+    <g transform="rotate(120 256 256)">
+      <line x1="256" y1="256" x2="256" y2="92" stroke="url(#ice-crystal)" stroke-width="11" stroke-linecap="round" />
+      <path d="M 230 148 L 256 122 L 282 148" fill="none" stroke="url(#ice-crystal)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 224 196 L 256 164 L 288 196" fill="none" stroke="url(#ice-crystal)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
+      <polygon points="256,76 264,88 256,98 248,88" fill="#ffffff" />
+    </g>
+    <g transform="rotate(180 256 256)">
+      <line x1="256" y1="256" x2="256" y2="92" stroke="url(#ice-crystal)" stroke-width="11" stroke-linecap="round" />
+      <path d="M 230 148 L 256 122 L 282 148" fill="none" stroke="url(#ice-crystal)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 224 196 L 256 164 L 288 196" fill="none" stroke="url(#ice-crystal)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
+      <polygon points="256,76 264,88 256,98 248,88" fill="#ffffff" />
+    </g>
+    <g transform="rotate(240 256 256)">
+      <line x1="256" y1="256" x2="256" y2="92" stroke="url(#ice-crystal)" stroke-width="11" stroke-linecap="round" />
+      <path d="M 230 148 L 256 122 L 282 148" fill="none" stroke="url(#ice-crystal)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 224 196 L 256 164 L 288 196" fill="none" stroke="url(#ice-crystal)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
+      <polygon points="256,76 264,88 256,98 248,88" fill="#ffffff" />
+    </g>
+    <g transform="rotate(300 256 256)">
+      <line x1="256" y1="256" x2="256" y2="92" stroke="url(#ice-crystal)" stroke-width="11" stroke-linecap="round" />
+      <path d="M 230 148 L 256 122 L 282 148" fill="none" stroke="url(#ice-crystal)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 224 196 L 256 164 L 288 196" fill="none" stroke="url(#ice-crystal)" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
+      <polygon points="256,76 264,88 256,98 248,88" fill="#ffffff" />
+    </g>
 
-  <!-- The Crystalline "W" Glyph Structure -->
-  <!-- Left Outer Down-Stem (Facet 1) -->
-  <polygon points="120,160 164,160 216,380 180,380" fill="url(#facet-left)" />
-  <!-- Left Inner Up-Stem (Facet 2) -->
-  <polygon points="180,380 216,380 256,260 240,240" fill="url(#facet-center-left)" />
-  <!-- Center Peak Ice Shard (Facet 3) -->
-  <polygon points="240,240 256,216 272,240 256,264" fill="#ffffff" />
-  <!-- Right Inner Down-Stem (Facet 4) -->
-  <polygon points="272,240 256,260 296,380 332,380" fill="url(#facet-center-right)" />
-  <!-- Right Outer Up-Stem (Facet 5) -->
-  <polygon points="332,380 296,380 348,160 392,160" fill="url(#facet-right)" />
-
-  <!-- Chiseled Edge Highlights -->
-  <!-- Left blade crest -->
-  <polyline points="120,160 180,380 256,216 332,380 392,160" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
-  <!-- Secondary facet ridge lines -->
-  <line x1="164" y1="160" x2="216" y2="380" stroke="#bae6fd" stroke-width="1.5" stroke-opacity="0.8" />
-  <line x1="348" y1="160" x2="296" y2="380" stroke="#bae6fd" stroke-width="1.5" stroke-opacity="0.8" />
-
-  <!-- Snow / Ice Star Crystals at the peaks -->
-  <!-- Top Left Peak Sparkle -->
-  <g transform="translate(120, 160)">
-    <circle cx="0" cy="0" r="4" fill="#ffffff" />
-    <path d="M 0 -12 L 0 12 M -12 0 L 12 0" stroke="#e0f2fe" stroke-width="1.5" stroke-linecap="round" />
+    <circle cx="256" cy="256" r="38" fill="#0b1329" stroke="url(#ice-crystal)" stroke-width="5" />
+    <circle cx="256" cy="256" r="24" fill="url(#frost-core)" />
+    <circle cx="256" cy="256" r="9" fill="#ffffff" />
+    <polygon points="256,236 261,251 276,256 261,261 256,276 251,261 236,256 251,251" fill="#ffffff" opacity="0.9" />
   </g>
-
-  <!-- Center Peak Diamond Star -->
-  <g transform="translate(256, 216)">
-    <circle cx="0" cy="0" r="5" fill="#ffffff" filter="url(#ice-glow)" />
-    <path d="M 0 -16 L 0 16 M -16 0 L 16 0 M -6 -6 L 6 6 M -6 6 L 6 -6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
-  </g>
-
-  <!-- Top Right Peak Sparkle -->
-  <g transform="translate(392, 160)">
-    <circle cx="0" cy="0" r="4" fill="#ffffff" />
-    <path d="M 0 -12 L 0 12 M -12 0 L 12 0" stroke="#e0f2fe" stroke-width="1.5" stroke-linecap="round" />
-  </g>
-
-  <!-- Floating Frost Flakes -->
-  <circle cx="160" cy="270" r="2.5" fill="#bae6fd" opacity="0.7" />
-  <circle cx="352" cy="270" r="2.5" fill="#bae6fd" opacity="0.7" />
-  <circle cx="210" cy="180" r="2" fill="#7dd3fc" opacity="0.6" />
-  <circle cx="302" cy="180" r="2" fill="#7dd3fc" opacity="0.6" />
-  <circle cx="256" cy="405" r="3" fill="#38bdf8" opacity="0.8" />
 </svg>

@@ -25,8 +25,8 @@ export default defineConfig(() => {
           short_name: 'Winter',
           description:
             'An ultra-lightweight, high-performance personal AI assistant built for speed and low-spec hardware.',
-          theme_color: '#0a1120',
-          background_color: '#0a1120',
+          theme_color: '#030712',
+          background_color: '#030712',
           display: 'standalone',
           orientation: 'portrait-primary',
           start_url: '/',

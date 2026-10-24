@@ -8,17 +8,16 @@ import {
   SidebarTab,
 } from './types';
 import {
-  loadConversations,
-  saveConversations,
-  loadActiveConvoId,
-  saveActiveConvoId,
-  loadUserMemory,
-  saveUserMemory,
-  loadSettings,
-  saveSettings,
-} from './utils/storage';
+  idbLoadConversations,
+  idbSaveConversations,
+  idbLoadSettings,
+  idbSaveSettings,
+  idbLoadMemory,
+  idbSaveMemory,
+} from './utils/indexedDBStorage';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { registerBackButtonHandler, triggerHapticFeedback } from './utils/capacitorBridge';
+import { WinterLocalEngine } from './utils/localEngine';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { ChatMessage } from './components/ChatMessage';
@@ -26,25 +25,25 @@ import { ChatInput } from './components/ChatInput';
 import { SettingsModal } from './components/SettingsModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { MemoryView } from './components/views/MemoryView';
-import { ToolsView } from './components/views/ToolsView';
 import { AboutView } from './components/views/AboutView';
 import { HistoryView } from './components/views/HistoryView';
-import { WinterLogo } from './components/WinterLogo';
-import { Sparkles, Key, Zap, Shield, BatteryCharging } from 'lucide-react';
+import { FrostySnowflakeLogo } from './components/FrostySnowflakeLogo';
+import { Sparkles, Key } from 'lucide-react';
 
 export default function App() {
-  const [conversations, setConversations] = useState<Conversation[]>(() => loadConversations());
-  const [activeConvoId, setActiveConvoId] = useState<string>(() => {
-    const saved = loadActiveConvoId();
-    const convos = loadConversations();
-    if (saved && convos.some((c) => c.id === saved)) return saved;
-    return convos[0]?.id || `convo_${Date.now()}`;
-  });
-
-  const [memoryItems, setMemoryItems] = useState<UserMemoryItem[]>(() => loadUserMemory());
-  const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConvoId, setActiveConvoId] = useState<string>('');
+  const [memoryItems, setMemoryItems] = useState<UserMemoryItem[]>([]);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   const [activeTab, setActiveTab] = useState<SidebarTab>('chat');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // Grok / Claude style collapsible sidebar (defaults open on large screens, collapsed on mobile)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024;
+    }
+    return false;
+  });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [input, setInput] = useState('');
@@ -55,42 +54,43 @@ export default function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Active conversation object
-  const currentConversation =
-    conversations.find((c) => c.id === activeConvoId) ||
-    conversations[0] || {
-      id: activeConvoId,
-      title: 'New Conversation',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      messages: [],
-    };
-
-  const messages = currentConversation.messages;
-
-  // Sync settings & theme on change
+  // Load from IndexedDB on initial mount
   useEffect(() => {
-    saveSettings(settings);
-    if (settings.theme === 'light') {
-      document.documentElement.classList.add('theme-light');
-    } else {
-      document.documentElement.classList.remove('theme-light');
+    async function initStorage() {
+      const [convos, loadedSettings, memories] = await Promise.all([
+        idbLoadConversations(),
+        idbLoadSettings(),
+        idbLoadMemory(),
+      ]);
+
+      setConversations(convos);
+      setActiveConvoId(convos[0]?.id || `convo_${Date.now()}`);
+      setSettings(loadedSettings);
+      setMemoryItems(memories);
+    }
+
+    initStorage();
+  }, []);
+
+  // Sync settings to IndexedDB
+  useEffect(() => {
+    if (settings) {
+      idbSaveSettings(settings);
     }
   }, [settings]);
 
-  // Sync conversations
+  // Sync conversations to IndexedDB
   useEffect(() => {
-    saveConversations(conversations);
+    if (conversations.length > 0) {
+      idbSaveConversations(conversations);
+    }
   }, [conversations]);
 
-  // Sync active convo id
+  // Sync user memory to IndexedDB
   useEffect(() => {
-    saveActiveConvoId(activeConvoId);
-  }, [activeConvoId]);
-
-  // Sync user memory
-  useEffect(() => {
-    saveUserMemory(memoryItems);
+    if (memoryItems.length > 0) {
+      idbSaveMemory(memoryItems);
+    }
   }, [memoryItems]);
 
   // Android hardware back button handler
@@ -113,19 +113,6 @@ export default function App() {
     return unregister;
   }, [isSidebarOpen, isSettingsOpen, activeTab]);
 
-  // Scroll to bottom when messages update
-  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: settings.reducedMotion ? 'auto' : behavior,
-    });
-  };
-
-  useEffect(() => {
-    if (activeTab === 'chat') {
-      scrollToBottom('smooth');
-    }
-  }, [messages.length, activeTab]);
-
   // Check server status on mount
   useEffect(() => {
     fetch('/api/status')
@@ -141,19 +128,49 @@ export default function App() {
           status: 'static-mode',
           appName: 'Winter',
           hasServerKey: false,
-          recommendedModel: 'gemini-3.8-flash',
+          recommendedModel: 'gemini-2.0-flash',
         });
       });
   }, []);
 
-  const handleToggleTheme = () => {
-    setSettings((prev) => ({
-      ...prev,
-      theme: prev.theme === 'dark' ? 'light' : 'dark',
-    }));
+  // Determine if offline engine is active
+  const isOfflineModeActive = !isOnline || Boolean(settings?.forceOfflineMode);
+
+  // Active conversation object
+  const currentConversation =
+    conversations.find((c) => c.id === activeConvoId) ||
+    conversations[0] || {
+      id: activeConvoId,
+      title: 'New Conversation',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      messages: [],
+    };
+
+  const messages = currentConversation.messages;
+
+  // Scroll to bottom when messages update
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: settings?.reducedMotion ? 'auto' : behavior,
+    });
   };
 
-  // Switch to a new conversation
+  useEffect(() => {
+    if (activeTab === 'chat') {
+      scrollToBottom('smooth');
+    }
+  }, [messages.length, activeTab]);
+
+  // Quick toggle for offline simulation
+  const handleToggleOfflineMode = () => {
+    triggerHapticFeedback('light');
+    if (!settings) return;
+    setSettings((prev) =>
+      prev ? { ...prev, forceOfflineMode: !prev.forceOfflineMode } : null
+    );
+  };
+
   const handleNewChat = () => {
     if (isGenerating && abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -241,7 +258,7 @@ export default function App() {
 
   const handleSendMessage = async (textToSend?: string) => {
     const promptText = (textToSend !== undefined ? textToSend : input).trim();
-    if (!promptText || isGenerating || !isOnline) return;
+    if (!promptText || isGenerating || !settings) return;
 
     setInput('');
     triggerHapticFeedback('light');
@@ -259,14 +276,14 @@ export default function App() {
       role: 'assistant',
       content: '',
       timestamp: Date.now(),
-      model: settings.model,
+      model: isOfflineModeActive ? 'Winter Local Brain' : settings.model,
+      isOffline: isOfflineModeActive,
     };
 
-    // Auto-update conversation title if it's the first message
     const shouldUpdateTitle =
       messages.length === 0 || currentConversation.title === 'New Conversation';
     const computedTitle = shouldUpdateTitle
-      ? promptText.slice(0, 30).trim() + (promptText.length > 30 ? '...' : '')
+      ? promptText.slice(0, 28).trim() + (promptText.length > 28 ? '...' : '')
       : currentConversation.title;
 
     const updatedMessages = [...messages, userMessage, placeholderAssistant];
@@ -289,7 +306,43 @@ export default function App() {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    // Inject user memory facts into system prompt if enabled
+    // Check if we should execute OFFLINE or ONLINE
+    if (isOfflineModeActive) {
+      try {
+        await WinterLocalEngine.generateStreaming({
+          prompt: promptText,
+          history: messages,
+          systemPrompt: settings.systemPrompt,
+          memoryItems: settings.enableMemoryInjection ? memoryItems : [],
+          onChunk: (accumulated) => {
+            setConversations((prev) =>
+              prev.map((c) =>
+                c.id === activeConvoId
+                  ? {
+                      ...c,
+                      messages: c.messages.map((m) =>
+                        m.id === assistantMessageId
+                          ? { ...m, content: accumulated, isOffline: true }
+                          : m
+                      ),
+                    }
+                  : c
+              )
+            );
+          },
+          signal: controller.signal,
+        });
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') return;
+        console.error('Offline generation error:', err);
+      } finally {
+        setIsGenerating(false);
+        abortControllerRef.current = null;
+      }
+      return;
+    }
+
+    // ONLINE MODE (Cloud)
     let effectiveSystemPrompt = settings.systemPrompt;
     if (settings.enableMemoryInjection && memoryItems.length > 0) {
       effectiveSystemPrompt += `\n\n[USER FACTS & PREFERENCES STORED IN WINTER MEMORY]:\n${memoryItems
@@ -306,14 +359,14 @@ export default function App() {
       let usedServer = false;
       let accumulatedText = '';
 
-      // 1. Try Server Endpoint (/api/chat)
+      // 1. Try Express / Server route (sub-second latency with flash models)
       try {
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             messages: conversationPayload,
-            model: settings.model,
+            model: settings.model || 'gemini-2.0-flash',
             temperature: settings.temperature,
             systemInstruction: effectiveSystemPrompt,
             customApiKey: settings.apiKey || undefined,
@@ -371,138 +424,133 @@ export default function App() {
         }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') throw err;
-        console.warn('Server endpoint bypassed, trying direct client fallback:', err);
+        console.warn('Server proxy failed, testing direct client fallback or offline fallback:', err);
       }
 
-      // 2. Client-side REST Fallback (for static Netlify / Vercel / standalone Capacitor APK)
+      // 2. Client-side direct fallback if custom API key is configured
       if (!usedServer || !accumulatedText.trim()) {
         const apiKey = settings.apiKey.trim();
-        if (!apiKey) {
-          throw new Error(
-            'No Gemini API key found. Please open Settings (⚙️ in header or sidebar) and enter your Gemini API key.'
-          );
-        }
+        if (apiKey) {
+          const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+            settings.model || 'gemini-2.0-flash'
+          )}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
 
-        const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-          settings.model
-        )}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
+          const restContents = conversationPayload.map((m) => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content }],
+          }));
 
-        const restContents = conversationPayload.map((m) => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content }],
-        }));
+          const directResponse = await fetch(directUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: restContents,
+              systemInstruction: { parts: [{ text: effectiveSystemPrompt }] },
+              generationConfig: { temperature: settings.temperature },
+            }),
+            signal: controller.signal,
+          });
 
-        const directResponse = await fetch(directUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: restContents,
-            systemInstruction: { parts: [{ text: effectiveSystemPrompt }] },
-            generationConfig: { temperature: settings.temperature },
-          }),
-          signal: controller.signal,
-        });
+          if (directResponse.ok && directResponse.body) {
+            const reader = directResponse.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
 
-        if (!directResponse.ok) {
-          const errBody = await directResponse.json().catch(() => ({}));
-          throw new Error(
-            errBody.error?.message ||
-              `HTTP ${directResponse.status}: Failed to reach Gemini API.`
-          );
-        }
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
 
-        if (!directResponse.body) {
-          throw new Error('ReadableStream not supported.');
-        }
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
 
-        const reader = directResponse.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let buffer = '';
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed.startsWith('data: ')) continue;
+                const payload = trimmed.slice(6);
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith('data: ')) continue;
-            const payload = trimmed.slice(6);
-
-            try {
-              const parsed = JSON.parse(payload);
-              const chunkText = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (chunkText) {
-                accumulatedText += chunkText;
-                setConversations((prev) =>
-                  prev.map((c) =>
-                    c.id === activeConvoId
-                      ? {
-                          ...c,
-                          messages: c.messages.map((m) =>
-                            m.id === assistantMessageId
-                              ? { ...m, content: accumulatedText }
-                              : m
-                          ),
-                        }
-                      : c
-                  )
-                );
+                try {
+                  const parsed = JSON.parse(payload);
+                  const chunkText = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                  if (chunkText) {
+                    accumulatedText += chunkText;
+                    setConversations((prev) =>
+                      prev.map((c) =>
+                        c.id === activeConvoId
+                          ? {
+                              ...c,
+                              messages: c.messages.map((m) =>
+                                m.id === assistantMessageId
+                                  ? { ...m, content: accumulatedText }
+                                  : m
+                              ),
+                            }
+                          : c
+                      )
+                    );
+                  }
+                } catch {
+                  // Ignore
+                }
               }
-            } catch {
-              // Ignore incomplete chunks
             }
           }
         }
       }
 
+      // 3. Seamless Instant Local Fallback if cloud was unreachable!
       if (!accumulatedText.trim()) {
-        accumulatedText =
-          'Winter received your prompt, but generated an empty response. Please try again.';
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === activeConvoId
-              ? {
-                  ...c,
-                  messages: c.messages.map((m) =>
-                    m.id === assistantMessageId
-                      ? { ...m, content: accumulatedText }
-                      : m
-                  ),
-                }
-              : c
-          )
-        );
+        await WinterLocalEngine.generateStreaming({
+          prompt: promptText,
+          history: messages,
+          systemPrompt: settings.systemPrompt,
+          memoryItems: settings.enableMemoryInjection ? memoryItems : [],
+          onChunk: (accumulated) => {
+            setConversations((prev) =>
+              prev.map((c) =>
+                c.id === activeConvoId
+                  ? {
+                      ...c,
+                      messages: c.messages.map((m) =>
+                        m.id === assistantMessageId
+                          ? { ...m, content: accumulated, isOffline: true }
+                          : m
+                      ),
+                    }
+                  : c
+              )
+            );
+          },
+          signal: controller.signal,
+        });
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
 
-      const errorMsg =
-        err instanceof Error
-          ? err.message
-          : 'An unexpected connection error occurred with the Gemini API.';
-
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === activeConvoId
-            ? {
-                ...c,
-                messages: c.messages.map((m) =>
-                  m.id === assistantMessageId
-                    ? {
-                        ...m,
-                        content: `⚠️ **Winter Notice:**\n\n${errorMsg}\n\n*Tap ⚙️ Settings to verify your API key or connection.*`,
-                        isError: true,
-                      }
-                    : m
-                ),
-              }
-            : c
-        )
-      );
+      // Fallback seamlessly to local engine on error
+      await WinterLocalEngine.generateStreaming({
+        prompt: promptText,
+        history: messages,
+        systemPrompt: settings.systemPrompt,
+        memoryItems: settings.enableMemoryInjection ? memoryItems : [],
+        onChunk: (accumulated) => {
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.id === activeConvoId
+                ? {
+                    ...c,
+                    messages: c.messages.map((m) =>
+                      m.id === assistantMessageId
+                        ? { ...m, content: accumulated, isOffline: true }
+                        : m
+                    ),
+                  }
+                : c
+            )
+          );
+        },
+        signal: controller.signal,
+      });
     } finally {
       setIsGenerating(false);
       abortControllerRef.current = null;
@@ -535,11 +583,22 @@ export default function App() {
     }
   };
 
+  if (!settings) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[#030712] text-slate-200">
+        <div className="flex flex-col items-center gap-3">
+          <FrostySnowflakeLogo size={42} spinning={true} />
+          <p className="text-xs text-slate-400 font-mono animate-pulse">Initializing Winter...</p>
+        </div>
+      </div>
+    );
+  }
+
   const hasApiKeyReady = Boolean(serverStatus?.hasServerKey || settings.apiKey.trim());
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-main)] text-[var(--text-primary)] antialiased select-text">
-      {/* Left Collapsible Dashboard Sidebar */}
+      {/* Grok & Claude Collapsible Sidebar (Can be completely hidden) */}
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -551,33 +610,35 @@ export default function App() {
         onNewChat={handleNewChat}
         onDeleteConversation={handleDeleteConversation}
         isOnline={isOnline}
+        isOfflineModeActive={isOfflineModeActive}
       />
 
       {/* Main Right Area */}
       <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative">
-        {/* Header with hamburger and active title */}
+        {/* Minimal Claude/Grok Top Bar */}
         <Header
           settings={settings}
           conversationTitle={
             activeTab === 'chat'
               ? currentConversation.title
               : activeTab === 'history'
-              ? 'Chat History'
+              ? 'History'
               : activeTab === 'memory'
-              ? 'Memory & Notes'
-              : activeTab === 'tools'
-              ? 'Tools & Bridge'
-              : 'About Winter'
+              ? 'Memory'
+              : 'About'
           }
+          isSidebarOpen={isSidebarOpen}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          onNewChat={handleNewChat}
           onOpenSettings={() => setIsSettingsOpen(true)}
-          onToggleTheme={handleToggleTheme}
+          onToggleOfflineMode={handleToggleOfflineMode}
           isGenerating={isGenerating}
           isOnline={isOnline}
+          isOfflineModeActive={isOfflineModeActive}
           serverStatus={serverStatus}
         />
 
-        {/* View Switcher: Chat, History, Memory, Tools, or About */}
+        {/* View Switcher: Chat, History, Memory, or About */}
         {activeTab === 'history' ? (
           <HistoryView
             conversations={conversations}
@@ -596,70 +657,52 @@ export default function App() {
             onSaveMemory={setMemoryItems}
             enableMemoryInjection={settings.enableMemoryInjection}
             onToggleMemoryInjection={(enabled) =>
-              setSettings((prev) => ({ ...prev, enableMemoryInjection: enabled }))
+              setSettings((prev) => (prev ? { ...prev, enableMemoryInjection: enabled } : null))
             }
           />
-        ) : activeTab === 'tools' ? (
-          <ToolsView />
         ) : activeTab === 'about' ? (
           <AboutView />
         ) : (
-          /* Main Chat Area */
+          /* Main Clean Centered Chat Area */
           <main className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col justify-between">
             {messages.length === 0 ? (
-              /* Welcome Screen with stylish W logo */
+              /* Minimalist Welcome Screen */
               <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 max-w-2xl mx-auto w-full text-center animate-in fade-in duration-300">
-                <WinterLogo size={76} className="mb-4" />
+                <FrostySnowflakeLogo size={68} className="mb-3" />
 
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">
+                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white mb-2">
                   Winter
                 </h2>
-                <p className="text-sm sm:text-base text-slate-300 max-w-md mx-auto mb-6 leading-relaxed">
-                  Calm, intelligent, and focused personal AI assistant. Designed for speed, privacy, and low-spec hardware.
+                <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto mb-6 leading-relaxed">
+                  Calm, intelligent personal AI companion. Fast online cloud intelligence with automatic offline on-device brain.
                 </p>
-
-                {/* Badges */}
-                <div className="flex flex-wrap items-center justify-center gap-2 mb-8 text-xs text-slate-400">
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800">
-                    <Zap className="w-3.5 h-3.5 text-sky-400" />
-                    <span>Ultra-fast Flash Model</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800">
-                    <BatteryCharging className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Low Memory &amp; Battery</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800">
-                    <Shield className="w-3.5 h-3.5 text-blue-400" />
-                    <span>100% Local Storage</span>
-                  </span>
-                </div>
 
                 {/* Prompt Starter Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full text-left mb-4">
                   {[
                     {
-                      title: 'Plan with clarity',
-                      desc: 'Help me prioritize my day with calm focus',
+                      title: 'Summarize key points',
+                      desc: 'Extract main takeaways calmly and concisely',
                     },
                     {
-                      title: 'Concise explanation',
-                      desc: 'Explain quantum computing in 3 simple paragraphs',
+                      title: 'Plan a structured day',
+                      desc: 'Design a clean time-blocked focus schedule',
                     },
                     {
-                      title: 'Review my code',
-                      desc: 'Inspect a function for edge cases and performance',
+                      title: 'Review or write code',
+                      desc: 'Inspect algorithms or draft clean TypeScript',
                     },
                     {
                       title: 'Draft a message',
-                      desc: 'Write a calm, respectful response to a complex request',
+                      desc: 'Write a calm, respectful professional note',
                     },
                   ].map((card, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleSendMessage(card.desc)}
-                      className="p-3.5 rounded-xl bg-slate-900/90 hover:bg-slate-800/90 border border-slate-800/80 hover:border-sky-500/50 transition-all text-left group"
+                      className="p-3.5 rounded-2xl bg-[#0c1424]/90 hover:bg-[#111c33] border border-slate-800/80 hover:border-sky-500/40 transition-all text-left group"
                     >
-                      <p className="text-xs font-semibold text-sky-300 group-hover:text-sky-200 flex items-center gap-1">
+                      <p className="text-xs font-semibold text-sky-300 group-hover:text-sky-200 flex items-center gap-1.5">
                         <Sparkles className="w-3 h-3 text-sky-400" />
                         <span>{card.title}</span>
                       </p>
@@ -668,25 +711,25 @@ export default function App() {
                   ))}
                 </div>
 
-                {/* API Key Reminder if not setup */}
-                {!hasApiKeyReady && (
-                  <div className="mt-2 p-3 rounded-xl bg-sky-950/50 border border-sky-800/60 max-w-md w-full flex items-center justify-between text-xs text-sky-200">
+                {/* Optional Key Setup Reminder if server has no key and user entered none */}
+                {!hasApiKeyReady && !isOfflineModeActive && (
+                  <div className="mt-2 p-3 rounded-xl bg-sky-950/30 border border-sky-900/50 max-w-md w-full flex items-center justify-between text-xs text-sky-200">
                     <div className="flex items-center gap-2">
-                      <Key className="w-4 h-4 text-sky-400 shrink-0" />
-                      <span>Configure your Gemini API key to begin</span>
+                      <Key className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      <span>Configure your API key or use Offline Brain</span>
                     </div>
                     <button
                       onClick={() => setIsSettingsOpen(true)}
-                      className="px-2.5 py-1 rounded-lg bg-sky-500 text-slate-950 font-medium hover:bg-sky-400 transition-colors"
+                      className="px-2.5 py-1 rounded-lg bg-sky-400 text-slate-950 font-medium hover:bg-sky-300 transition-colors"
                     >
-                      Open Settings
+                      Settings
                     </button>
                   </div>
                 )}
               </div>
             ) : (
-              /* Message List */
-              <div className="w-full max-w-4xl mx-auto py-3 space-y-1">
+              /* Message List (Centered Column Claude/Grok style) */
+              <div className="w-full max-w-3xl mx-auto py-3 space-y-1">
                 {messages.map((m, index) => {
                   const isLast = index === messages.length - 1;
                   return (
@@ -704,21 +747,21 @@ export default function App() {
               </div>
             )}
 
-            {/* Input Bar */}
+            {/* Input Bar (Centered container) */}
             <ChatInput
               input={input}
               setInput={setInput}
               onSend={handleSendMessage}
               onStop={handleStopGenerating}
               isGenerating={isGenerating}
-              isOnline={isOnline}
-              showStarters={messages.length > 0 && messages.length < 4}
+              isOnline={!isOfflineModeActive}
+              showStarters={messages.length > 0 && messages.length < 3}
             />
           </main>
         )}
 
         {/* Offline Toast Banner */}
-        <OfflineIndicator />
+        <OfflineIndicator isOfflineModeActive={isOfflineModeActive} />
 
         {/* Settings Modal */}
         <SettingsModal

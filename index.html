@@ -4,19 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <title>Winter - Personal AI Assistant</title>
-    <meta name="description" content="An ultra-lightweight, high-performance personal AI assistant PWA built for speed, calmness, and low-spec hardware." />
+    <meta name="description" content="A calm, intelligent personal AI assistant working seamlessly online with cloud intelligence and completely offline on low-spec hardware." />
     
     <!-- OpenGraph & Social Cards -->
     <meta property="og:title" content="Winter - Personal AI Assistant" />
-    <meta property="og:description" content="An ultra-lightweight, high-performance personal AI assistant PWA built for speed, calmness, and low-spec hardware." />
+    <meta property="og:description" content="A calm, intelligent personal AI assistant working seamlessly online with cloud intelligence and completely offline on low-spec hardware." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Winter - Personal AI Assistant" />
-    <meta name="twitter:description" content="An ultra-lightweight, high-performance personal AI assistant PWA built for speed, calmness, and low-spec hardware." />
+    <meta name="twitter:description" content="A calm, intelligent personal AI assistant working seamlessly online with cloud intelligence and completely offline on low-spec hardware." />
 
     <!-- PWA & Mobile Web App Meta -->
-    <meta name="theme-color" content="#0a1120" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#030712" />
+    <meta name="color-scheme" content="dark" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -26,6 +26,22 @@
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <script>
+      // Suppress Vite HMR WebSocket connection closure errors in sandboxed preview iframe
+      window.addEventListener('error', function(e) {
+        if (e.message && (e.message.includes('WebSocket') || e.message.includes('closed without opened'))) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function(e) {
+        if (e.reason && e.reason.message && (e.reason.message.includes('WebSocket') || e.reason.message.includes('closed without opened'))) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        }
+      }, true);
+    </script>
 
     <!-- Font smoothing & fast initial paint styling -->
     <style>

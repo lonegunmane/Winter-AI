@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express, { Request, Response } from 'express';
+import http from 'http';
 import { GoogleGenAI } from '@google/genai';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,6 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const httpServer = http.createServer(app);
 const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json({ limit: '5mb' }));
@@ -18,7 +20,7 @@ app.get('/api/status', (_req: Request, res: Response) => {
     status: 'ok',
     appName: 'Winter',
     hasServerKey: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY'),
-    recommendedModel: 'gemini-3.8-flash',
+    recommendedModel: 'gemini-2.0-flash',
   });
 });
 
@@ -34,12 +36,12 @@ app.post('/api/chat', async (req: Request, res: Response) => {
   if (!resolvedApiKey || resolvedApiKey === 'MY_GEMINI_API_KEY') {
     res.status(400).json({
       error:
-        'No Gemini API key available. Please enter your personal Gemini API key in Settings (⚙️).',
+        'No Winter Cloud API key configured. Enter your key in Settings (⚙️) or use Offline Brain.',
     });
     return;
   }
 
-  const selectedModel = model || 'gemini-3.8-flash';
+  const selectedModel = model || 'gemini-2.0-flash';
 
   const formattedContents = Array.isArray(messages)
     ? messages.map((m: { role: string; content: string }) => ({
@@ -116,15 +118,19 @@ async function startServer() {
       res.sendFile(path.resolve(distPath, 'index.html'));
     });
   } else {
+    const isHmrDisabled = process.env.DISABLE_HMR === 'true';
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: isHmrDisabled ? false : { server: httpServer },
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`❄️ Winter assistant server running on http://0.0.0.0:${PORT}`);
   });
 }

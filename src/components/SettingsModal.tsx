@@ -7,8 +7,6 @@ import {
   FileText,
   Trash2,
   Download,
-  Sun,
-  Moon,
   Check,
   AlertCircle,
   ExternalLink,
@@ -17,10 +15,20 @@ import {
   HardDrive,
   Eye,
   EyeOff,
+  WifiOff,
+  Shield,
+  Palette,
 } from 'lucide-react';
-import { AppSettings, AVAILABLE_MODELS, DEFAULT_SYSTEM_PROMPT, ServerStatus } from '../types';
+import {
+  AppSettings,
+  AVAILABLE_MODELS,
+  OFFLINE_ENGINES,
+  DEFAULT_SYSTEM_PROMPT,
+  ServerStatus,
+} from '../types';
 import { getStorageUsage, clearMessages, exportChatHistory } from '../utils/storage';
 import { PWAInstallButton } from './PWAInstallButton';
+import { FrostySnowflakeLogo } from './FrostySnowflakeLogo';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -45,7 +53,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [showKey, setShowKey] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'model' | 'personality' | 'appearance' | 'data'>('model');
+  const [activeTab, setActiveTab] = useState<'model' | 'offline' | 'personality' | 'appearance' | 'data'>('model');
   const [confirmClear, setConfirmClear] = useState(false);
 
   if (!isOpen) return null;
@@ -54,7 +62,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleTestApiKey = async () => {
     setTestStatus('testing');
-    setTestMessage('Testing API connection...');
+    setTestMessage('Verifying cloud connection...');
 
     const keyToTest = formData.apiKey?.trim();
 
@@ -66,7 +74,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             messages: [{ role: 'user', content: 'Say "Winter is ready" in 3 words.' }],
-            model: formData.model || 'gemini-3.8-flash',
+            model: formData.model || 'gemini-2.0-flash',
             customApiKey: keyToTest || undefined,
           }),
         });
@@ -75,12 +83,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           testPassed = true;
         }
       } catch {
-        // Continue to direct test
+        // Fall through
       }
 
       if (!testPassed && keyToTest) {
         const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-          formData.model || 'gemini-3.8-flash'
+          formData.model || 'gemini-2.0-flash'
         )}:generateContent?key=${encodeURIComponent(keyToTest)}`;
 
         const directRes = await fetch(directUrl, {
@@ -103,11 +111,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       }
 
       setTestStatus('success');
-      setTestMessage('Key validated! Gemini is connected.');
+      setTestMessage('Connection verified! Winter Cloud is active.');
       setTimeout(() => setTestStatus('idle'), 4000);
     } catch (err: unknown) {
       setTestStatus('error');
-      setTestMessage(err instanceof Error ? err.message : 'Failed to connect to Gemini API');
+      setTestMessage(err instanceof Error ? err.message : 'Failed to connect to Winter Cloud');
     }
   };
 
@@ -121,28 +129,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
-      <div className="flex flex-col w-full max-w-xl max-h-[92vh] rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl overflow-hidden text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="flex flex-col w-full max-w-xl max-h-[90vh] rounded-2xl bg-[#030712] border border-sky-950/60 shadow-2xl overflow-hidden text-slate-100">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-slate-950/60">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">❄️</span>
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-900 bg-[#070c18]">
+          <div className="flex items-center gap-2.5">
+            <FrostySnowflakeLogo size={26} />
             <div>
-              <h2 className="text-base font-semibold text-white">Winter Settings</h2>
-              <p className="text-xs text-slate-400">Personal AI Assistant Configuration</p>
+              <h2 className="text-sm sm:text-base font-semibold text-white">Winter Settings</h2>
+              <p className="text-[11px] text-slate-400">Hybrid Online &amp; Offline Intelligence</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"
             title="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Tab navigation for clean low-spec mobile browsing */}
-        <div className="flex border-b border-slate-800 bg-slate-900/80 px-4 gap-1 overflow-x-auto text-xs sm:text-sm">
+        {/* Tab navigation */}
+        <div className="flex border-b border-slate-900 bg-[#050914] px-4 gap-1 overflow-x-auto text-xs sm:text-sm">
           <button
             onClick={() => setActiveTab('model')}
             className={`py-2.5 px-3 border-b-2 font-medium transition-colors shrink-0 flex items-center gap-1.5 ${
@@ -152,7 +160,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }`}
           >
             <Key className="w-3.5 h-3.5" />
-            <span>AI &amp; API Key</span>
+            <span>Cloud API</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('offline')}
+            className={`py-2.5 px-3 border-b-2 font-medium transition-colors shrink-0 flex items-center gap-1.5 ${
+              activeTab === 'offline'
+                ? 'border-sky-400 text-sky-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <WifiOff className="w-3.5 h-3.5" />
+            <span>Offline Brain</span>
           </button>
           <button
             onClick={() => setActiveTab('personality')}
@@ -163,7 +182,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Personality</span>
+            <span>Instructions</span>
           </button>
           <button
             onClick={() => setActiveTab('appearance')}
@@ -173,8 +192,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Sun className="w-3.5 h-3.5" />
-            <span>Theme &amp; UI</span>
+            <Palette className="w-3.5 h-3.5" />
+            <span>Appearance</span>
           </button>
           <button
             onClick={() => setActiveTab('data')}
@@ -185,21 +204,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }`}
           >
             <HardDrive className="w-3.5 h-3.5" />
-            <span>Storage ({messageCount})</span>
+            <span>Storage</span>
           </button>
         </div>
 
         {/* Tab Content Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-5 text-sm">
-          {/* TAB 1: MODEL & API KEY */}
+          {/* TAB 1: CLOUD API */}
           {activeTab === 'model' && (
-            <div className="space-y-5">
+            <div className="space-y-4">
               {/* API Key Box */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                     <Key className="w-3.5 h-3.5 text-sky-400" />
-                    <span>Gemini API Key</span>
+                    <span>Winter Cloud API Key</span>
                   </label>
                   <a
                     href="https://aistudio.google.com/app/apikey"
@@ -219,10 +238,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
                     placeholder={
                       serverStatus?.hasServerKey
-                        ? 'Using environment key (or paste custom key here)'
-                        : 'AIzaSy...'
+                        ? 'Using environment key (or paste personal key here)'
+                        : 'Enter your API key...'
                     }
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 pr-20 font-mono"
+                    className="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 pr-20 font-mono"
                   />
                   <div className="absolute right-2 top-2 flex items-center gap-1">
                     <button
@@ -236,26 +255,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                 </div>
 
-                {/* Key Status Hint */}
                 <div className="flex items-center justify-between text-xs pt-1">
                   {serverStatus?.hasServerKey ? (
                     <span className="flex items-center gap-1 text-emerald-400 text-xs">
                       <Check className="w-3.5 h-3.5" />
-                      Server API key active
+                      Server key ready
                     </span>
                   ) : formData.apiKey.trim() ? (
-                    <span className="text-slate-400 text-xs">Custom key stored securely in browser</span>
+                    <span className="text-slate-400 text-xs">Personal key stored locally</span>
                   ) : (
                     <span className="text-amber-400/90 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
-                      Key required to chat
+                      Optional: Offline Brain works even without a key
                     </span>
                   )}
 
                   <button
                     onClick={handleTestApiKey}
                     disabled={testStatus === 'testing'}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-sky-300 disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-medium text-sky-300 disabled:opacity-50 transition-colors"
                   >
                     {testStatus === 'testing' ? (
                       <>
@@ -265,13 +283,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     ) : (
                       <>
                         <Sparkles className="w-3 h-3" />
-                        <span>Test Key</span>
+                        <span>Test Connection</span>
                       </>
                     )}
                   </button>
                 </div>
 
-                {/* Test Feedback */}
                 {testMessage && (
                   <div
                     className={`p-2.5 rounded-lg text-xs flex items-center gap-2 ${
@@ -279,7 +296,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800'
                         : testStatus === 'error'
                         ? 'bg-rose-950/60 text-rose-300 border border-rose-800'
-                        : 'bg-slate-800 text-slate-300'
+                        : 'bg-slate-900 text-slate-300'
                     }`}
                   >
                     {testStatus === 'success' && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
@@ -293,7 +310,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                   <Cpu className="w-3.5 h-3.5 text-sky-400" />
-                  <span>Flash Model Selection</span>
+                  <span>Model Selection</span>
                 </label>
                 <div className="space-y-2">
                   {AVAILABLE_MODELS.map((m) => (
@@ -302,7 +319,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       className={`flex items-start justify-between p-3 rounded-xl border cursor-pointer transition-all ${
                         formData.model === m.id
                           ? 'border-sky-500 bg-sky-950/30'
-                          : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
+                          : 'border-slate-800/80 bg-slate-900/40 hover:border-slate-700'
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -317,18 +334,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <div>
                           <div className="font-medium text-white flex items-center gap-2">
                             <span>{m.name}</span>
-                            {m.id === 'gemini-3.8-flash' && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-300 font-normal">
-                                Recommended
-                              </span>
-                            )}
                           </div>
                           <p className="text-xs text-slate-400 mt-0.5">{m.description}</p>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
                         <span className="text-[11px] text-emerald-400 font-mono block">{m.speed}</span>
-                        <span className="text-[10px] text-slate-500 block">{m.memoryUsage} RAM</span>
+                        <span className="text-[10px] text-slate-500 block">{m.tier}</span>
                       </div>
                     </label>
                   ))}
@@ -344,10 +356,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </label>
                   <span className="text-xs text-slate-400">
                     {formData.temperature < 0.4
-                      ? 'Precise & Deterministic'
+                      ? 'Precise & Structured'
                       : formData.temperature < 0.8
                       ? 'Balanced & Calm'
-                      : 'Creative & Expansive'}
+                      : 'Creative'}
                   </span>
                 </div>
                 <input
@@ -359,28 +371,87 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onChange={(e) => setFormData({ ...formData, temperature: parseFloat(e.target.value) })}
                   className="w-full accent-sky-400 cursor-pointer"
                 />
-                <div className="flex justify-between text-[10px] text-slate-500">
-                  <span>0.0 (Strict factuality)</span>
-                  <span>0.7 (Default)</span>
-                  <span>1.5 (High creativity)</span>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: OFFLINE BRAIN */}
+          {activeTab === 'offline' && (
+            <div className="space-y-4">
+              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-white flex items-center gap-1.5">
+                      <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Force Offline Mode</span>
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Runs Winter purely on your device without sending any data over the internet.
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={formData.forceOfflineMode}
+                    onChange={(e) => setFormData({ ...formData, forceOfflineMode: e.target.checked })}
+                    className="accent-amber-400 h-4 w-4 rounded cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-sky-400" />
+                  <span>On-Device Engine</span>
+                </label>
+                <div className="space-y-2">
+                  {OFFLINE_ENGINES.map((eng) => (
+                    <label
+                      key={eng.id}
+                      className={`flex items-start justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                        formData.offlineEngine === eng.id
+                          ? 'border-sky-500 bg-sky-950/30'
+                          : 'border-slate-800/80 bg-slate-900/40 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="radio"
+                          name="offlineEngine"
+                          value={eng.id}
+                          checked={formData.offlineEngine === eng.id}
+                          onChange={(e) =>
+                            setFormData({ ...formData, offlineEngine: e.target.value as AppSettings['offlineEngine'] })
+                          }
+                          className="mt-1 accent-sky-500"
+                        />
+                        <div>
+                          <div className="font-medium text-white flex items-center gap-2">
+                            <span>{eng.name}</span>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-0.5">{eng.description}</p>
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-mono shrink-0">{eng.size}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 2: PERSONALITY & PROMPTS */}
+          {/* TAB 3: CUSTOM INSTRUCTIONS */}
           {activeTab === 'personality' && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-sky-400" />
-                  <span>Winter System Persona</span>
+                  <span>Custom Instructions</span>
                 </label>
                 <button
                   onClick={handleResetSystemPrompt}
                   className="text-xs text-sky-400 hover:underline"
                 >
-                  Reset to default
+                  Reset default
                 </button>
               </div>
 
@@ -388,53 +459,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 value={formData.systemPrompt}
                 onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
                 rows={9}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 leading-relaxed font-mono"
+                className="w-full bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 leading-relaxed font-mono"
                 placeholder="Enter custom instructions for Winter..."
               />
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Winter is programmed to be calm, intelligent, respectful, and concise. You can customize instructions to shape Winter as a coding assistant, writing editor, daily planner, or tutor.
-              </p>
             </div>
           )}
 
-          {/* TAB 3: THEME & UI */}
+          {/* TAB 4: APPEARANCE */}
           {activeTab === 'appearance' && (
-            <div className="space-y-5">
-              {/* Theme Mode */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  Color Theme
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, theme: 'dark' })}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
-                      formData.theme === 'dark'
-                        ? 'border-sky-500 bg-sky-950/40 text-white'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
-                    }`}
-                  >
-                    <Moon className="w-4 h-4 text-sky-400" />
-                    <span className="font-medium text-sm">Winter Dark (Default)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, theme: 'light' })}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
-                      formData.theme === 'light'
-                        ? 'border-sky-500 bg-sky-950/40 text-white'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
-                    }`}
-                  >
-                    <Sun className="w-4 h-4 text-amber-400" />
-                    <span className="font-medium text-sm">Winter Frost Light</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Font Size */}
+            <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
                   Chat Font Size
@@ -448,7 +481,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       className={`capitalize py-2 px-3 rounded-xl border text-xs font-medium transition-all ${
                         formData.fontSize === size
                           ? 'border-sky-500 bg-sky-950/40 text-sky-300'
-                          : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                          : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700'
                       }`}
                     >
                       {size}
@@ -457,13 +490,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
 
-              {/* Performance Mode / Low Spec Device Optimization */}
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-slate-200">Ultra-Lightweight Animations</p>
+                    <p className="text-xs font-semibold text-slate-200">Reduced Motion</p>
                     <p className="text-[11px] text-slate-400">
-                      Disables complex GPU effects for low-spec phones (Huawei P20, iPhone X) and 8GB RAM laptops.
+                      Disables complex GPU transforms for 8GB RAM laptops and low-spec mobile chipsets.
                     </p>
                   </div>
                   <input
@@ -475,34 +507,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
 
-              {/* Install PWA Prompt inside settings */}
               <div className="space-y-2 pt-2 border-t border-slate-800">
                 <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  Progressive Web App
+                  Install Application
                 </label>
                 <PWAInstallButton variant="settings" />
               </div>
             </div>
           )}
 
-          {/* TAB 4: DATA & STORAGE */}
+          {/* TAB 5: STORAGE */}
           {activeTab === 'data' && (
-            <div className="space-y-5">
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Local Memory Usage</span>
+            <div className="space-y-4">
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Storage</span>
+                  <span className="font-mono text-emerald-400 font-semibold">IndexedDB Offline Ready</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Local Footprint</span>
                   <span className="font-mono text-sky-400 font-semibold">{storageUsage.formatted}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Stored Messages</span>
-                  <span className="font-mono text-white font-semibold">{messageCount} messages</span>
-                </div>
-                <p className="text-[11px] text-slate-500 pt-1">
-                  All chats are saved locally in your browser storage. Nothing is stored on an external database.
-                </p>
               </div>
 
-              {/* Export Options */}
+              {/* Export */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                   <Download className="w-3.5 h-3.5 text-sky-400" />
@@ -511,40 +539,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => {
-                      const msgs = JSON.parse(localStorage.getItem('winter_chat_messages_v1') || '[]');
-                      exportChatHistory(msgs, 'markdown');
+                      const msgs = JSON.parse(localStorage.getItem('winter_conversations_v3') || '[]');
+                      exportChatHistory(msgs[0]?.messages || [], 'markdown');
                     }}
                     disabled={messageCount === 0}
-                    className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-medium text-white disabled:opacity-40 transition-colors"
+                    className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-xs font-medium text-white disabled:opacity-40 transition-colors"
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Export Markdown (.md)</span>
+                    <span>Export Markdown</span>
                   </button>
                   <button
                     onClick={() => {
-                      const msgs = JSON.parse(localStorage.getItem('winter_chat_messages_v1') || '[]');
-                      exportChatHistory(msgs, 'json');
+                      const msgs = JSON.parse(localStorage.getItem('winter_conversations_v3') || '[]');
+                      exportChatHistory(msgs[0]?.messages || [], 'json');
                     }}
                     disabled={messageCount === 0}
-                    className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-medium text-white disabled:opacity-40 transition-colors"
+                    className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-xs font-medium text-white disabled:opacity-40 transition-colors"
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Export JSON (.json)</span>
+                    <span>Export JSON</span>
                   </button>
                 </div>
               </div>
 
               {/* Clear History */}
-              <div className="space-y-2 pt-3 border-t border-slate-800">
-                <label className="text-xs font-semibold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Clear Conversation History</span>
-                </label>
-
+              <div className="space-y-2 pt-2 border-t border-slate-800">
                 {confirmClear ? (
                   <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/70 space-y-2">
                     <p className="text-xs text-rose-200">
-                      Are you sure you want to delete all messages? This cannot be undone.
+                      Delete all chat history? This cannot be undone.
                     </p>
                     <div className="flex gap-2">
                       <button
@@ -555,7 +576,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         }}
                         className="flex-1 py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-xs font-medium text-white transition-colors"
                       >
-                        Yes, Delete All
+                        Yes, Delete
                       </button>
                       <button
                         onClick={() => setConfirmClear(false)}
@@ -569,10 +590,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <button
                     onClick={() => setConfirmClear(true)}
                     disabled={messageCount === 0}
-                    className="flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl border border-rose-900/50 bg-rose-950/20 hover:bg-rose-950/40 text-xs font-medium text-rose-300 disabled:opacity-40 transition-colors"
+                    className="flex items-center justify-center gap-1.5 w-full py-2 px-3 rounded-xl border border-rose-900/50 bg-rose-950/20 hover:bg-rose-950/40 text-xs font-medium text-rose-300 disabled:opacity-40 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>Delete All Messages</span>
+                    <span>Clear All Conversations</span>
                   </button>
                 )}
               </div>
@@ -581,7 +602,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-2.5 px-5 py-3 border-t border-slate-800 bg-slate-950/60">
+        <div className="flex items-center justify-end gap-2.5 px-5 py-3 border-t border-slate-900 bg-[#070c18]">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-400 hover:text-white transition-colors"
@@ -590,10 +611,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
           <button
             onClick={handleSaveAndClose}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-xs sm:text-sm font-medium text-slate-950 transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-400 hover:bg-sky-300 text-xs sm:text-sm font-medium text-slate-950 transition-colors shadow-sm"
           >
             <Check className="w-4 h-4" />
-            <span>Save &amp; Apply</span>
+            <span>Save</span>
           </button>
         </div>
       </div>

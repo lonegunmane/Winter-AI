@@ -4,11 +4,12 @@ import {
   Copy,
   Check,
   Shield,
-  Zap,
   Sparkles,
   Download,
+  WifiOff,
+  CloudLightning,
 } from 'lucide-react';
-import { WinterLogo } from '../WinterLogo';
+import { FrostySnowflakeLogo } from '../FrostySnowflakeLogo';
 
 export const AboutView: React.FC = () => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -37,105 +38,103 @@ npx cap open android
 # In Android Studio: Build > Build Bundle(s) / APK(s) > Build APK(s)`;
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-4xl mx-auto w-full space-y-6">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-3xl mx-auto w-full space-y-5">
       {/* Header Emblem Card */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-sky-950/40 border border-slate-800 text-center flex flex-col items-center">
-        <WinterLogo size={80} className="mb-4" />
-        <h2 className="text-2xl font-bold text-white tracking-tight">Winter AI Assistant</h2>
-        <p className="text-xs sm:text-sm text-sky-300 font-mono mt-1">v1.1 (Capacitor &amp; Android APK Ready)</p>
-        <p className="text-xs sm:text-sm text-slate-300 max-w-lg mt-3 leading-relaxed">
-          An ultra-lightweight, high-performance personal AI companion built for speed, privacy, and low-spec hardware like the Huawei P20 and 8GB RAM laptops.
+      <div className="p-6 rounded-3xl bg-gradient-to-br from-[#030712] via-[#070c18] to-sky-950/30 border border-sky-950/60 text-center flex flex-col items-center shadow-xl">
+        <FrostySnowflakeLogo size={72} className="mb-3" />
+        <h2 className="text-2xl font-bold text-white tracking-tight">Winter</h2>
+        <p className="text-xs text-sky-300 font-mono mt-0.5">Personal AI Assistant</p>
+        <p className="text-xs sm:text-sm text-slate-300 max-w-md mt-2.5 leading-relaxed">
+          Calm, intelligent, and designed with crystalline elegance. Operates seamlessly both online with fast cloud intelligence and completely offline on low-spec hardware.
         </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-5 text-xs">
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-slate-300">
-            <Zap className="w-3.5 h-3.5 text-sky-400" />
-            <span>&lt; 1 MB Total Footprint</span>
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-4 text-xs">
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-slate-300">
+            <CloudLightning className="w-3.5 h-3.5 text-sky-400" />
+            <span>Winter Cloud</span>
           </span>
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-slate-300">
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-slate-300">
+            <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+            <span>Winter Offline Brain</span>
+          </span>
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-slate-300">
             <Shield className="w-3.5 h-3.5 text-emerald-400" />
-            <span>100% Local Browser Storage</span>
-          </span>
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-slate-300">
-            <Smartphone className="w-3.5 h-3.5 text-blue-400" />
-            <span>Android APK Compatible</span>
+            <span>IndexedDB Local Storage</span>
           </span>
         </div>
       </div>
 
-      {/* The Winter "W" Logo Design Description */}
-      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+      {/* Architecture Highlights */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div className="p-4 rounded-2xl bg-[#0c1424]/90 border border-sky-950/60 space-y-1.5">
+          <div className="flex items-center gap-2 text-sky-400 font-semibold text-xs">
+            <CloudLightning className="w-4 h-4" />
+            <span>Primary Cloud Intelligence</span>
+          </div>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Ultra-fast flash streaming intelligence with sub-second response times for deep reasoning, STEM, and synthesis.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-[#0c1424]/90 border border-amber-950/50 space-y-1.5">
+          <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs">
+            <WifiOff className="w-4 h-4" />
+            <span>On-Device Offline Engine</span>
+          </div>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Seamlessly handles text summarization, daily planning, message drafting, and conversation recall without any network connection.
+          </p>
+        </div>
+      </div>
+
+      {/* Frosty Snowflake ❄️ Icon */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-[#0c1424]/90 border border-slate-800/80 space-y-2.5">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-sky-400" />
-          <h3 className="font-semibold text-white text-sm">Winter &quot;W&quot; Brand Icon &amp; SVG Specification</h3>
+          <h3 className="font-semibold text-white text-xs sm:text-sm">Frosty Ice Emblem (❄️)</h3>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed">
-          The Winter emblem represents the letter <strong>&quot;W&quot;</strong> chiseled as a glacial crystal:
+          Engineered with 6-fold radial symmetry, crystalline spines, and glowing diamond facets on a deep space black canvas with soft cyan accents.
         </p>
-        <ul className="list-disc pl-5 text-xs text-slate-400 space-y-1.5 leading-relaxed">
-          <li>
-            <strong>Architecture</strong>: A 5-facet crystalline &quot;W&quot; glyph with sharp glacial peaks and high-contrast diamond lighting.
-          </li>
-          <li>
-            <strong>Palette</strong>: Deep midnight frost background (<code className="text-sky-300">#0a1120</code>), arctic ice cyan (<code className="text-sky-300">#38bdf8</code>), powder blue (<code className="text-sky-300">#7dd3fc</code>), and pure glacial white (<code className="text-sky-300">#ffffff</code>).
-          </li>
-          <li>
-            <strong>Peaks &amp; Star Sparkles</strong>: 8-point ice crystals adorn the top vertex peaks, with a subtle outer hexagonal aura.
-          </li>
-          <li>
-            <strong>Android Maskable Compliance</strong>: Includes a 15% safe-zone margin in <code className="text-sky-300">public/icon-maskable.svg</code> so circular or squircle Android app launchers crop it without clipping the glyph.
-          </li>
-        </ul>
-        <div className="pt-2">
+        <div className="pt-1">
           <a
-            href="/winter-logo-w.svg"
-            download="winter-logo-w.svg"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-medium transition-colors"
+            href="/icon.svg"
+            download="winter-icon.svg"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-sky-300 text-xs font-medium border border-slate-800 transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Download Vector SVG (winter-logo-w.svg)</span>
+            <span>Download Vector SVG</span>
           </a>
         </div>
       </div>
 
-      {/* Guide: How to Turn Winter into a Real Android APK with Capacitor */}
-      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+      {/* Capacitor Android APK Guide */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-[#0c1424]/90 border border-slate-800/80 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Smartphone className="w-4 h-4 text-emerald-400" />
-            <h3 className="font-semibold text-white text-sm">How to Generate a Real Android APK (Capacitor)</h3>
+            <h3 className="font-semibold text-white text-xs sm:text-sm">Android APK Build Guide</h3>
           </div>
           <button
             onClick={() => copyToClipboard(capacitorCommands, 'cap-commands')}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition-colors"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-medium text-slate-300 transition-colors border border-slate-800"
           >
             {copiedCode === 'cap-commands' ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400">Copied</span>
+                <Check className="w-3 h-3 text-emerald-400" />
+                <span className="text-emerald-400 text-[11px]">Copied</span>
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copy Commands</span>
+                <Copy className="w-3 h-3" />
+                <span className="text-[11px]">Copy</span>
               </>
             )}
           </button>
         </div>
 
-        <p className="text-xs text-slate-400 leading-relaxed">
-          Because this app is built with lightweight vanilla Web standards and Vite, it can be converted into a native Android APK in under 2 minutes:
-        </p>
-
-        <div className="rounded-xl overflow-hidden bg-slate-950 border border-slate-800 p-3.5 font-mono text-xs text-slate-300 overflow-x-auto">
+        <div className="rounded-xl overflow-hidden bg-[#02050e] border border-slate-800/80 p-3 font-mono text-[11px] text-slate-300 overflow-x-auto">
           <pre className="whitespace-pre">{capacitorCommands}</pre>
-        </div>
-
-        <div className="p-3 rounded-xl bg-sky-950/40 border border-sky-800/60 text-xs text-slate-300 space-y-1">
-          <p className="font-semibold text-sky-300">Huawei P20 / Low-Spec Android Tips:</p>
-          <p className="text-slate-400 text-[11px] leading-relaxed">
-            In Android Studio, enable ProGuard / R8 minification in <code className="text-sky-300">android/app/build.gradle</code>. Because Winter uses minimal DOM and zero heavy frameworks, the resulting APK is under 5MB and consumes only ~25MB of RAM on Android 8.1+ devices.
-          </p>
         </div>
       </div>
     </div>

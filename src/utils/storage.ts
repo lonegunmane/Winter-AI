@@ -19,6 +19,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   fontSize: 'normal',
   reducedMotion: false,
   enableMemoryInjection: true,
+  offlineEngine: 'smart-local',
+  forceOfflineMode: false,
 };
 
 export function loadSettings(): AppSettings {

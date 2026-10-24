@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Send, Square, Sparkles } from 'lucide-react';
+import { ArrowUp, Square, Sparkles } from 'lucide-react';
 
 interface ChatInputProps {
   input: string;
@@ -12,10 +12,10 @@ interface ChatInputProps {
 }
 
 const STARTER_PROMPTS = [
-  'Summarize today\'s key priorities calmly and clearly',
-  'Draft a polite, concise professional follow-up email',
-  'Explain how async/await works under the hood',
-  'Give me 3 practical tips for staying focused while working',
+  'Summarize key ideas concisely',
+  'Draft a polite follow-up email',
+  'Plan a focused workday schedule',
+  'Help me review this code logic',
 ];
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -29,12 +29,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea smoothly without thrashing layout
+  // Auto-resize textarea smoothly without layout shifts
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
   }, [input]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -46,9 +46,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  const hasText = input.trim().length > 0;
+
   return (
-    <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 pb-3 pt-1">
-      {/* Starter Prompts (shown when conversation is new or requested) */}
+    <div className="w-full max-w-3xl mx-auto px-3 sm:px-4 pb-3 pt-1">
+      {/* Starter Prompts */}
       {showStarters && (
         <div className="mb-2 flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
           <span className="text-[11px] text-slate-500 flex items-center gap-1 shrink-0 px-1">
@@ -59,7 +61,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <button
               key={idx}
               onClick={() => onSend(prompt)}
-              className="shrink-0 px-2.5 py-1 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors text-[11px]"
+              className="shrink-0 px-2.5 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-800/80 text-slate-300 hover:text-white transition-colors text-[11px]"
             >
               {prompt}
             </button>
@@ -67,8 +69,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </div>
       )}
 
-      {/* Input Container */}
-      <div className="relative flex items-end gap-2 p-1.5 sm:p-2 rounded-2xl bg-slate-900 border border-slate-700/80 focus-within:border-sky-500/80 focus-within:ring-1 focus-within:ring-sky-500/30 transition-all shadow-lg">
+      {/* Claude/Grok style floating input card */}
+      <div className="relative flex items-end gap-2 p-1.5 sm:p-2 rounded-2xl bg-[#0c1424]/90 backdrop-blur-md border border-slate-800 focus-within:border-sky-500/60 transition-all shadow-xl shadow-black/40">
         <textarea
           ref={textareaRef}
           value={input}
@@ -76,40 +78,41 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={
             !isOnline
-              ? 'Offline mode (cannot reach Gemini API)...'
-              : 'Message Winter... (Enter to send, Shift+Enter for newline)'
+              ? 'Message Winter (Offline Engine)...'
+              : 'Message Winter...'
           }
-          disabled={!isOnline && !isGenerating}
+          disabled={isGenerating}
           rows={1}
-          className="flex-1 max-h-40 bg-transparent text-sm sm:text-base text-white placeholder-slate-500 px-3 py-2 resize-none focus:outline-none leading-relaxed"
+          className="flex-1 max-h-44 bg-transparent text-sm sm:text-base text-slate-100 placeholder-slate-500 px-3 py-2 resize-none focus:outline-none leading-relaxed"
         />
 
         {/* Action Button: Send or Stop */}
-        <div className="shrink-0 pb-1 pr-1">
+        <div className="shrink-0 pb-0.5 pr-0.5">
           {isGenerating ? (
             <button
               onClick={onStop}
               className="p-2 sm:p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 border border-slate-700 transition-colors flex items-center justify-center shadow-xs"
               title="Stop generating"
+              aria-label="Stop generating"
             >
-              <Square className="w-4 h-4 fill-current" />
+              <Square className="w-3.5 h-3.5 fill-current" />
             </button>
           ) : (
             <button
               onClick={() => onSend()}
-              disabled={!input.trim() || !isOnline}
-              className="p-2 sm:p-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 font-medium transition-colors flex items-center justify-center shadow-xs"
-              title="Send message"
+              disabled={!hasText || isGenerating}
+              className={`p-2 sm:p-2.5 rounded-xl transition-all flex items-center justify-center ${
+                hasText
+                  ? 'bg-sky-400 hover:bg-sky-300 text-slate-950 shadow-md shadow-sky-500/20 active:scale-95'
+                  : 'bg-slate-800/60 text-slate-600 cursor-not-allowed'
+              }`}
+              title="Send"
+              aria-label="Send"
             >
-              <Send className="w-4 h-4" />
+              <ArrowUp className="w-4 h-4 stroke-[2.5]" />
             </button>
           )}
         </div>
-      </div>
-
-      <div className="flex items-center justify-between px-2 pt-1.5 text-[10px] text-slate-500">
-        <span>Winter v1.0 • Low-spec optimized</span>
-        <span>Runs locally on your device</span>
       </div>
     </div>
   );
