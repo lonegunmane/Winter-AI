@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #0a1120;
+    --bg-surface: #101c33;
+    --bg-elevated: #182846;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-subtle: #1e3a5f;
+    --accent: #38bdf8;
+    --accent-hover: #7dd3fc;
+  }
+
+  .theme-light {
+    --bg-main: #f3f7fb;
+    --bg-surface: #ffffff;
+    --bg-elevated: #e2ecf7;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-subtle: #cbd5e1;
+    --accent: #0284c7;
+    --accent-hover: #0369a1;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overscroll-behavior-y: none;
+  }
+
+  /* Thin, GPU-friendly scrollbar for low-spec devices */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(56, 189, 248, 0.5);
+  }
+}
+
+/* Light syntax/markdown formatting */
+.prose-winter {
+  line-height: 1.65;
+  word-break: break-word;
+}
+.prose-winter p {
+  margin-bottom: 0.75rem;
+}
+.prose-winter p:last-child {
+  margin-bottom: 0;
+}
+.prose-winter ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.prose-winter ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.prose-winter li {
+  margin-bottom: 0.25rem;
+}
+.prose-winter strong {
+  font-weight: 600;
+  color: #e0f2fe;
+}
+.theme-light .prose-winter strong {
+  color: #0369a1;
+}
+.prose-winter blockquote {
+  border-left: 3px solid #38bdf8;
+  padding-left: 0.75rem;
+  margin-left: 0;
+  margin-right: 0;
+  color: #94a3b8;
+  font-style: italic;
+}
